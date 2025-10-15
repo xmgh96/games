@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>江苏美食连连看</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            image-rendering: pixelated;
+            font-family: 'Press Start 2P', cursive, Arial, sans-serif;
+        }
+        
+        body {
+            background: #2c3e50;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            color: #ecf0f1;
+            overflow-x: hidden;
+            background-image: 
+                linear-gradient(rgba(44, 62, 80, 0.9), rgba(44, 62, 80, 0.9)),
+                repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(52, 73, 94, 0.5) 4px, rgba(52, 73, 94, 0.5) 8px);
+        }
+        
+        .game-wrapper {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            width: 100%;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 4px solid #3498db;
+            border-radius: 0;
+            box-shadow: 4px 4px 0 #2980b9;
+        }
+        
+        h1 {
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+            color: #f1c40f;
+            text-shadow: 2px 2px 0 #e74c3c;
+            letter-spacing: 1px;
+        }
+        
+        .subtitle {
+            font-size: 0.7rem;
+            color: #ecf0f1;
+            margin-bottom: 5px;
+        }
+        
+        .season-indicator {
+            display: inline-block;
+            background: #e74c3c;
+            color: white;
+            font-size: 0.6rem;
+            padding: 3px 8px;
+            margin-top: 5px;
+            border: 2px solid #2c3e50;
+            box-shadow: 2px 2px 0 #c0392b;
+        }
+        
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #34495e;
+            border: 6px solid #2c3e50;
+            border-radius: 0;
+            padding: 15px;
+            box-shadow: 
+                inset 4px 4px 0 #4a6572,
+                inset -4px -4px 0 #2c3e50,
+                8px 8px 0 rgba(0, 0, 0, 0.3);
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 15px;
+            padding: 0 5px;
+        }
+        
+        .info-box {
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #2c3e50;
+            background: #f1c40f;
+            padding: 8px 10px;
+            border: 3px solid #2c3e50;
+            border-radius: 0;
+            box-shadow: 3px 3px 0 #d35400;
+            text-align: center;
+            flex: 1;
+            margin: 0 4px;
+        }
+        
+        .game-board {
+            display: grid;
+            grid-gap: 6px;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 500px;
+            background: #2c3e50;
+            padding: 8px;
+            border: 4px solid #2c3e50;
+            border-radius: 0;
+            box-shadow: 
+                inset 3px 3px 0 #4a6572,
+                inset -3px -3px 0 #2c3e50;
+            position: relative;
+        }
+        
+        .cell {
+            aspect-ratio: 1;
+            background: #ecf0f1;
+            border: 3px solid #2c3e50;
+            border-radius: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 2px 2px 0 #7f8c8d;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* SVG图标适配样式 */
+        .cell svg {
+            width: 70%;
+            height: 70%;
+            object-fit: contain;
+        }
+        
+        .cell:hover {
+            transform: translateY(-2px);
+            box-shadow: 3px 3px 0 #7f8c8d;
+        }
+        
+        .cell.selected {
+            transform: scale(0.95);
+            background: #f1c40f;
+            box-shadow: 0 0 0 3px #e74c3c;
+            animation: pulse 0.5s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            from { transform: scale(0.95); }
+            to { transform: scale(1.05); }
+        }
+        
+        .cell.matched {
+            animation: matchAnimation 0.8s ease forwards;
+        }
+        
+        @keyframes matchAnimation {
+            0% { 
+                transform: scale(1); 
+                opacity: 1; 
+                background: #ecf0f1;
+            }
+            25% { 
+                transform: scale(1.3); 
+                background: #2ecc71; 
+                box-shadow: 0 0 20px #2ecc71;
+            }
+            50% { 
+                transform: scale(1.2) rotate(10deg); 
+                opacity: 0.8; 
+            }
+            75% { 
+                transform: scale(1.1) rotate(-10deg); 
+                opacity: 0.5;
+            }
+            100% { 
+                transform: scale(0) rotate(0deg); 
+                opacity: 0; 
+            }
+        }
+        
+        .cell::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.3);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .cell:active::before {
+            opacity: 1;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 20;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 0;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 4px 4px 0 #2980b9;
+            transition: all 0.1s ease;
+            flex: 1;
+            margin: 0 5px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.3;
+        }
+        
+        .btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 #2980b9;
+        }
+        
+        .btn-hint {
+            background: #2ecc71;
+            box-shadow: 4px 4px 0 #27ae60;
+        }
+        
+        .btn-restart {
+            background: #e74c3c;
+            box-shadow: 4px 4px 0 #c0392b;
+        }
+        
+        .btn-album {
+            background: #9b59b6;
+            box-shadow: 4px 4px 0 #8e44ad;
+        }
+        
+        .food-info {
+            background: #34495e;
+            border: 4px solid #2c3e50;
+            border-radius: 0;
+            padding: 12px;
+            margin-top: 10px;
+            width: 100%;
+            max-width: 500px;
+            color: #ecf0f1;
+            box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        .food-info h3 {
+            text-align: center;
+            margin-bottom: 8px;
+            color: #f1c40f;
+            font-size: 0.9rem;
+        }
+        
+        .food-description {
+            font-size: 0.7rem;
+            line-height: 1.4;
+            text-align: center;
+            color: #bdc3c7;
+        }
+        
+        .game-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border: 6px solid #3498db;
+            border-radius: 0;
+            text-align: center;
+            z-index: 100;
+            display: none;
+            box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.5);
+            max-width: 80%;
+        }
+        
+        .game-message h2 {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            color: #f1c40f;
+        }
+        
+        .game-message p {
+            margin-bottom: 15px;
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #2c3e50;
+            border: 2px solid #ecf0f1;
+            border-radius: 0;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: #2ecc71;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .combo-counter {
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.5rem;
+            color: #f1c40f;
+            text-shadow: 2px 2px 0 #e74c3c;
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        /* 难度选择界面 */
+        .difficulty-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #2c3e50;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .difficulty-screen h2 {
+            margin-bottom: 30px;
+            color: #f1c40f;
+            text-shadow: 2px 2px 0 #e74c3c;
+            text-align: center;
+        }
+        
+        .difficulty-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .difficulty-btn {
+            background: #3498db;
+            color: white;
+            border: 4px solid #2c3e50;
+            padding: 15px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: 4px 4px 0 #2980b9;
+            transition: all 0.1s ease;
+            text-align: center;
+        }
+        
+        .difficulty-btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 #2980b9;
+        }
+        
+        .difficulty-btn.easy {
+            background: #2ecc71;
+            box-shadow: 4px 4px 0 #27ae60;
+        }
+        
+        .difficulty-btn.medium {
+            background: #f39c12;
+            box-shadow: 4px 4px 0 #d35400;
+        }
+        
+        .difficulty-btn.hard {
+            background: #e74c3c;
+            box-shadow: 4px 4px 0 #c0392b;
+        }
+        
+        .difficulty-info {
+            font-size: 0.6rem;
+            margin-top: 5px;
+            color: #ecf0f1;
+        }
+        
+        /* 美食图鉴 */
+        .food-album {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(44, 62, 80, 0.95);
+            z-index: 150;
+            overflow-y: auto;
+            display: none;
+            padding: 20px;
+        }
+        
+        .album-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .album-title {
+            color: #f1c40f;
+            text-shadow: 2px 2px 0 #e74c3c;
+        }
+        
+        .close-album {
+            background: #e74c3c;
+            color: white;
+            border: 3px solid #2c3e50;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            box-shadow: 3px 3px 0 #c0392b;
+        }
+        
+        .close-album:active {
+            transform: translate(3px, 3px);
+            box-shadow: 0 0 0 #c0392b;
+        }
+        
+        .food-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .food-card {
+            background: #34495e;
+            border: 4px solid #2c3e50;
+            padding: 15px;
+            box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        .food-card.locked {
+            opacity: 0.5;
+            filter: grayscale(100%);
+        }
+        
+        .food-emoji {
+            text-align: center;
+            margin-bottom: 10px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .food-emoji svg {
+            width: 50px;
+            height: 50px;
+        }
+        
+        .food-card h3 {
+            color: #f1c40f;
+            font-size: 0.9rem;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        
+        .food-details {
+            font-size: 0.7rem;
+            color: #bdc3c7;
+            line-height: 1.4;
+        }
+        
+        .food-season {
+            display: inline-block;
+            font-size: 0.6rem;
+            padding: 2px 5px;
+            margin-top: 5px;
+            background: #3498db;
+            color: white;
+            border-radius: 3px;
+        }
+        
+        /* 像素风字体 */
+        @font-face {
+            font-family: 'Press Start 2P';
+            font-style: normal;
+            font-weight: 400;
+            src: url(https://fonts.gstatic.com/s/pressstart2p/v14/e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2) format('woff2');
+        }
+    </style>
+</head>
+<body>
+    <!-- 难度选择界面 -->
+    <div class="difficulty-screen" id="difficultyScreen">
+        <h2>选择难度</h2>
+        <div class="difficulty-options">
+            <div class="difficulty-btn easy" data-size="4" data-time="180">
+                简单
+                <div class="difficulty-info">4×4 棋盘 | 180秒</div>
+            </div>
+            <div class="difficulty-btn medium" data-size="6" data-time="150">
+                中等
+                <div class="difficulty-info">6×6 棋盘 | 150秒</div>
+            </div>
+            <div class="difficulty-btn hard" data-size="8" data-time="120">
+                困难
+                <div class="difficulty-info">8×8 棋盘 | 120秒</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 美食图鉴 -->
+    <div class="food-album" id="foodAlbum">
+        <div class="album-header">
+            <h2 class="album-title">江苏美食图鉴</h2>
+            <button class="close-album" id="closeAlbum">关闭</button>
+        </div>
+        <div class="food-grid" id="foodGrid">
+            <!-- 美食卡片将通过JS动态生成 -->
+        </div>
+    </div>
+    
+    <div class="game-wrapper">
+        <div class="header">
+            <h1>江苏美食连连看</h1>
+            <p class="subtitle">美食探索</p>
+            <div class="season-indicator" id="seasonIndicator">
+                <i class="fas fa-leaf"></i> 当前季节: <span id="currentSeason">春季</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress" id="progressBar"></div>
+            </div>
+        </div>
+        
+        <div class="game-container">
+            <div class="game-info">
+                <div class="info-box score">分数: <span id="score">0</span></div>
+                <div class="info-box timer">时间: <span id="timer">120</span>秒</div>
+                <div class="info-box level">关卡: <span id="level">1</span></div>
+            </div>
+            
+            <div class="game-board" id="gameBoard">
+                <!-- 游戏棋盘将通过JS动态生成 -->
+            </div>
+            
+            <div class="controls">
+                <button class="btn btn-hint" id="hintBtn">提示( -5分 )</button>
+                <button class="btn btn-album" id="albumBtn">美食图鉴</button>
+                <button class="btn btn-restart" id="restartBtn">重新开始</button>
+            </div>
+        </div>
+        
+        <div class="food-info">
+            <h3 id="foodName">江苏美食</h3>
+            <p class="food-description" id="foodDescription">点击美食图标了解江苏特色美食文化</p>
+        </div>
+    </div>
+    
+    <div class="game-message" id="gameMessage">
+        <h2 id="messageTitle">游戏结束</h2>
+        <p id="messageText"></p>
+        <button class="btn" id="messageBtn">确定</button>
+    </div>
+    
+    <div class="combo-counter" id="comboCounter"></div>
+
+    <script>
+        // 季节检测
+        function getCurrentSeason() {
+            const month = new Date().getMonth() + 1; // 1-12月
+            
+            if (month >= 3 && month <= 5) return "春季";
+            if (month >= 6 && month <= 8) return "夏季";
+            if (month >= 9 && month <= 11) return "秋季";
+            return "冬季";
+        }
+        
+        // 江苏美食数据（包含季节信息和详细介绍，使用SVG图标替代emoji）
+        const jiangsuFoods = [
+            { 
+                emoji: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="50" cy="45" rx="30" ry="25" fill="#FFE4B5" />
+                    <ellipse cx="50" cy="65" rx="25" ry="20" fill="#FFE4B5" />
+                    <circle cx="35" cy="40" r="3" fill="#000" />
+                    <circle cx="65" cy="40" r="3" fill="#000" />
+                    <path d="M45,50 Q50,55 55,50" stroke="#000" stroke-width="1.5" fill="none" />
+                    <path d="M20,40 L10,30 L15,45 Z" fill="#FFE4B5" />
+                    <path d="M80,40 L90,30 L85,45 Z" fill="#FFE4B5" />
+                </svg>`, 
+                name: '南京盐水鸭', 
+                description: '南京著名传统菜肴，有"金陵鸭肴甲天下"之美誉。鸭皮白肉嫩，肥而不腻，具有香、酥、嫩的特点。其历史可追溯至六朝时期，至今已有一千多年历史。',
+                history: '盐水鸭的历史始于六朝时期，当时南京作为都城，宫廷饮食文化兴盛，鸭子的做法日益精细。明清时期，盐水鸭的制作工艺趋于成熟，成为南京人喜爱的美食。',
+                method: '选用当地优质鸭种，经过腌制、焯水、焖煮等多道工序。关键在于火候的掌握和卤料的配方，传统卤料包含八角、桂皮、香叶等多种香料。',
+                season: '四季皆宜'
+            },
+            { 
+                emoji: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="20" y="30" width="60" height="40" rx="5" fill="#D2B48C" />
+                    <path d="M20,30 L50,15 L80,30 Z" fill="#A0522D" />
+                    <circle cx="35" cy="50" r="4" fill="#F4A460" />
+                    <circle cx="45" cy="45" r="3" fill="#F4A460" />
+                    <circle cx="55" cy="55" r="3.5" fill="#F4A460" />
+                    <circle cx="65" cy="48" r="4" fill="#F4A460" />
+                    <circle cx="40" cy="60" r="3" fill="#F4A460" />
+                    <circle cx="60" cy="52" r="3" fill="#F4A460" />
+                </svg>`, 
+                name: '扬州炒饭', 
+                description: '扬州经典美食，米饭粒粒分明，配料丰富，色香味俱全。相传源自隋朝，历经千年发展，成为享誉中外的中式炒饭代表。',
+                history: '扬州炒饭的起源可追溯至隋朝，当时称为"碎金饭"，由鸡蛋与米饭同炒而成，色泽金黄如碎金。历经各朝代改良，加入火腿、虾仁等配料，形成今日的扬州炒饭。',
+                method: '选用籼米煮成米饭后冷藏，使其粒粒分明。炒制时先炒鸡蛋，再加入米饭、火腿、虾仁、青豆等配料，用大火快速翻炒，调味讲究咸鲜适中。',
+                season: '四季皆宜'
+            },
+            { 
+                emoji: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="30" y="20" width="40" height="15" rx="2" fill="#8B4513" />
+                    <rect x="25" y="35" width="50" height="15" rx="2" fill="#8B4513" />
+                    <rect x="20" y="50" width="60" height="15" rx="2" fill="#8B4513" />
+                    <rect x="15" y="65" width="70" height="15" rx="2" fill="#8B4513" />
+                    <rect x="35" y="20" width="5" height="5" fill="#CD853F" />
+                    <rect x="45" y="35" width="5" height="5" fill="#CD853F" />
+                    <rect x="55" y="50" width="5" height="5" fill="#CD853F" />
+                    <rect x="65" y="65" width="5" height="5" fill="#CD853F" />
+                    <path d="M20,70 L10,75 L15,80 Z" fill="#8B4513" />
+                    <path d="M80,70 L90,75 L85,80 Z" fill="#8B4513" />
+                </svg>`, 
+                name: '无锡酱排骨', 
+                description: '无锡传统名菜，色泽酱红，肉质酥烂，骨香浓郁，咸中带甜，是江南地区"浓油赤酱"风格的代表菜肴。',
+                history: '无锡酱排骨始于清朝光绪年间，由无锡三凤桥菜馆创制，至今已有百余年历史。其独特的甜咸口味深受当地人喜爱，并逐渐闻名全国。',
+                method: '选用猪肋排，经过焯水、油炸后，加入酱油、糖、黄酒等调料长时间焖煮。关键在于糖的用量和焖煮时间，使肉质酥烂而不失形，酱汁浓郁入味。',
+                season: '四季皆宜'
+            },
+            { 
+                emoji: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M30,50 C30,30 50,20 70,30 C90,40 80,60 70,70 C60,80 40,75 30,50 Z" fill="#4682B4" />
+                    <path d="M70,30 C75,25 85,30 80,35 C75,40 65,35 70,30 Z" fill="#5F9EA0" />
+                    <circle cx="45" cy="45" r="2" fill="#000" />
+                    <circle cx="55" cy="50" r="2" fill="#000" />
+                    <path d="M60,60 L70,65 L65,70 L55,65 Z" fill="#5F9EA0" />
+                    <path d="M35,40 L25,35 L20,45 L30,50 Z" fill="#5F9EA0" />
+                    <path d="M40,60 C45,65 55,65 60,60" stroke="#F0E68C" stroke-width="2" fill="none" />
+                </svg>`, 
+                name: '苏州松鼠鳜鱼', 
+                description: '苏州传统名菜，形如松鼠，外脆里嫩，酸甜可口。因烹饪时鱼身切开后油炸，形似松鼠而得名，是苏州菜中的经典之作。',
+                history: '松鼠鳜鱼起源于清代乾隆年间，据说乾隆皇帝下江南时品尝后极为赞赏，从此名声大噪。最初使用鲤鱼制作，后因鳜鱼肉质更细嫩而改为鳜鱼。',
+                method: '选用新鲜鳜鱼，去骨后在鱼肉上切出花纹，裹上淀粉油炸至金黄，形似松鼠。再浇上由番茄酱、糖、醋等调制的酸甜汁，外脆里嫩，酸甜适中。',
+                season: '四季皆宜，春季最佳'
+            },
+            { 
+                emoji: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="20" y="20" width="60" height="40" rx="5" fill="#F5DEB3" />
+                    <path d="M20,40 L10,45 L15,55 L20,50 Z" fill="#F5DEB3" />
+                    <path d="M80,40 L90,45 L85,55 L80,50 Z" fill="#F5DEB3" />
+                    <rect x="30" y="60" width="40" height="20" rx="3" fill="#D2B48C" />
+                    <path d="M40,20 L40,10 L60,10 L60,20" fill="#A0522D" />
+                    <circle cx="35" cy="35" r="3" fill="#CD5C5C" />
+                    <circle cx="65" cy="35" r="3" fill="#CD5C5C" />
+                    <circle cx="50" cy="45" r="4" fill="#CD5C5C" />
+                </svg>`, 
+                name: '镇江肴肉', 
+                description: '镇江特色名菜，又称"水晶肴蹄"，肉质鲜嫩，口感独特，香味浓郁，皮白肉红，晶莹剔透，是镇江"三怪"之一。',
+                history: '镇江肴肉始于明朝，相传有对夫妻误将硝当作盐腌制猪肉，意外发现肉质鲜嫩，风味独特，由此创制了肴肉。至今已有数百年历史。',
+                method: '选用猪前蹄，经过腌制、焯水、焖煮等工序，加入硝石等调料使肉质呈现粉红色且口感脆嫩。食用时切片，常配以姜丝和醋，风味更佳。',
+                season: '四季皆宜'
+            },
+            { 
+                emoji: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="50" cy="50" rx="30" ry="25" fill="#F0E68C" />
+                    <path d="M50,25 L45,40 L55,40 Z" fill="#F0E68C" />
+                    <path d="M30,45 L25,60 L35,55 Z" fill="#F0E68C" />
+                    <path d="M70,45 L75,60 L65,55 Z" fill="#F0E68C" />
+                    <path d="M40,70 L35,85 L45,80 Z" fill="#F0E68C" />
+                    <path d="M60,70 L65,85 L55,80 Z" fill="#F0E68C" />
+                    <circle cx="45" cy="45" r="2" fill="#000" />
+                    <circle cx="55" cy="45" r="2" fill="#000" />
+                    <path d="M48,50 L52,50" stroke="#000" stroke-width="1.5" />
+                    <rect x="45" y="20" width="10" height="5" rx="2" fill="#8B4513" />
+                </svg>`, 
+                name: '阳澄湖大闸蟹', 
+                description: '江苏阳澄湖特产，中国最著名的淡水蟹之一。蟹肉鲜美，蟹黄丰满，肉质细嫩，味道醇厚，是秋季的美食佳品。',
+                history: '阳澄湖大闸蟹的历史可追溯至唐代，当时已成为贡品。明清时期，阳澄湖大闸蟹的名气达到顶峰，成为文人雅士秋季必尝的美食。',
+                method: '最经典的做法是清蒸，以保持其原汁原味。将鲜活的大闸蟹洗净后，用绳子捆扎，放入蒸笼中蒸熟，食用时蘸以姜醋，既美味又去腥。',
+                season: '秋季'
+            },
+            { 
+                emoji: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="50" cy="60" rx="30" ry="20" fill="#F5DEB3" />
+                    <path d="M20,60 C20,40 35,30 50,30 C65,30 80,40 80,60" stroke="#8B4513" stroke-width="3" fill="none" />
+                    <path d="M50,30 C55,15 65,10 70,25" stroke="#8B4513" stroke-width="2" fill="none" />
+                    <path d="M50,30 C45,15 35,10 30,25" stroke="#8B4513" stroke-width="2" fill="none" />
+                    <circle cx="40" cy="55" r="3" fill="#CD5C5C" />
+                    <circle cx="50" cy="52" r="3" fill="#CD5C5C" />
+                    <circle cx="60" cy="57" r="3" fill="#CD5C5C" />
+                    <path d="M30,65 C35,75 65,75 70,65" stroke="#CD5C5C" stroke-width="2" fill="none" />
+                </svg>`, 
+                name: '天目湖鱼头', 
+                description: '常州天目湖特色菜，选用天目湖特产的大头鱼，鱼头鲜嫩，汤色乳白，味道鲜美，营养丰富。',
+                history: '天目湖鱼头始于20世纪70年代，当地渔民将湖中大头鱼的鱼头与豆腐同煮，发现味道异常鲜美，逐渐发展成为当地特色名菜。',
+                method: '选用天目湖大头鱼的鱼头，洗净后煎至两面金黄，加入开水大火煮沸，再转小火慢炖，直至汤色乳白，加入豆腐等配料，调味后即可食用。',
+                season: '冬季最佳'
+            },
+            { 
+                emoji: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M30,70 C30,40 50,30 70,40 C90,50 80,80 70,80 C60,90 40,85 30,70 Z" fill="#20B2AA" />
+                    <path d="M70,40 C75,35 85,40 80,45 C75,50 65,45 70,40 Z" fill="#2F4F4F" />
+                    <path d="M35,60 L25,55 L20,65 L30,70 Z" fill="#2F4F4F" />
+                    <path d="M65,70 L75,75 L70,85 L60,80 Z" fill="#2F4F4F" />
+                    <circle cx="45" cy="55" r="2" fill="#000" />
+                    <circle cx="55" cy="60" r="2" fill="#000" />
+                    <path d="M40,65 C45,70 55,70 60,65" stroke="#F0E68C" stroke-width="2" fill="none" />
+                </svg>`, 
+                name: '淮安软兜长鱼', 
+                description: '淮安传统名菜，又称"软兜鳝鱼"，鳝鱼口感软嫩，味道鲜美，营养丰富，是淮扬菜中的代表菜品之一。',
+                history: '淮安软兜长鱼有着悠久的历史，早在清代就已闻名。因其食用时需用筷子从鳝鱼背部夹起，状如兜住，故得名"软兜"。',
+                method: '选用新鲜鳝鱼，去骨后用沸水焯烫，再用猪油快炒，加入酱油、黄酒等调料，勾芡后出锅。讲究火候和炒制时间，保持鳝鱼的鲜嫩口感。',
+                season: '春季最佳'
+            },
+            { 
+                emoji: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="25" y="30" width="50" height="50" rx="5" fill="#F5DEB3" />
+                    <path d="M25,30 L50,15 L75,30 Z" fill="#D2B48C" />
+                    <path d="M35,40 L35,70" stroke="#8B4513" stroke-width="1" stroke-dasharray="3,2" />
+                    <path d="M45,40 L45,70" stroke="#8B4513" stroke-width="1" stroke-dasharray="3,2" />
+                    <path d="M55,40 L55,70" stroke="#8B4513" stroke-width="1" stroke-dasharray="3,2" />
+                    <path d="M65,40 L65,70" stroke="#8B4513" stroke-width="1" stroke-dasharray="3,2" />
+                    <circle cx="40" cy="50" r="3" fill="#8B4513" />
+                    <circle cx="60" cy="50" r="3" fill="#8B4513" />
+                    <circle cx="50" cy="60" r="3" fill="#8B4513" />
+                </svg>`, 
+                name: '黄桥烧饼', 
+                description: '泰州黄桥镇传统小吃，外皮酥脆，内馅丰富，风味独特。因1940年黄桥战役中成为新四军的干粮而闻名。',
+                history: '黄桥烧饼历史悠久，据记载始于明末清初。1940年黄桥战役期间，当地群众制作大量烧饼支援新四军，使黄桥烧饼名声远扬。',
+                method: '以面粉为主要原料，配以猪油、芝麻、葱花等馅料，经过揉面、擀皮、包馅、烘烤等工序制作而成。讲究皮酥层多，馅料鲜香。',
+                season: '四季皆宜'
+            },
+            { 
+                emoji: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50,20 C30,20 20,40 20,60 C20,80 30,90 50,90 C70,90 80,80 80,60 C80,40 70,20 50,20 Z" fill="#5F9EA0" />
+                    <path d="M50,30 C60,30 70,40 70,50 C70,60 60,70 50,70 C40,70 30,60 30,50 C30,40 40,30 50,30 Z" fill="#4682B4" />
+                    <path d="M45,40 L55,40 L55,60 L45,60 Z" fill="#F0E68C" />
+                    <circle cx="45" cy="50" r="2" fill="#000" />
+                    <circle cx="55" cy="50" r="2" fill="#000" />
+                    <path d="M35,65 L65,65" stroke="#F0E68C" stroke-width="2" />
+                    <path d="M25,55 L15,50 L20,60 Z" fill="#5F9EA0" />
+                    <path d="M75,55 L85,50 L80,60 Z" fill="#5F9EA0" />
+                </svg>`, 
+                name: '南通文蛤', 
+                description: '南通特色海鲜，又称"天下第一鲜"，肉质鲜美，营养丰富，有多种烹饪方式，是南通饮食文化的代表。',
+                history: '南通文蛤的食用历史可追溯至数千年前，当地出土的新石器时代遗址中就有文蛤壳。历代文人墨客对其赞不绝口，称其为"天下第一鲜"。',
+                method: '文蛤的做法多样，可炒、可烩、可烧，也可做汤。最经典的是"文蛤饼"和"爆炒文蛤"，讲究保持其原汁原味，突出鲜美口感。',
+                season: '夏季最佳'
+            },
+            { 
+                emoji: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="30" fill="#FFFACD" />
+                    <path d="M50,20 C35,35 35,65 50,80 C65,65 65,35 50,20 Z" fill="#FFE4B5" />
+                    <circle cx="40" cy="45" r="3" fill="#8B4513" />
+                    <circle cx="60" cy="45" r="3" fill="#8B4513" />
+                    <circle cx="45" cy="60" r="3" fill="#8B4513" />
+                    <circle cx="55" cy="60" r="3" fill="#8B4513" />
+                    <path d="M35,30 C25,35 25,45 35,50" stroke="#D2B48C" stroke-width="2" fill="none" />
+                    <path d="M65,30 C75,35 75,45 65,50" stroke="#D2B48C" stroke-width="2" fill="none" />
+                </svg>`, 
+                name: '盐城藕粉圆子', 
+                description: '盐城传统甜品，外皮用藕粉制作，Q弹爽滑，内馅香甜，是当地特色小吃，尤其适合节庆时节食用。',
+                history: '盐城藕粉圆子始于清代，最初是当地民间小吃，后逐渐成为节庆必备甜品。因其制作精细，味道独特，成为盐城饮食文化的代表之一。',
+                method: '以藕粉为主要原料制作外皮，内馅由芝麻、核桃、花生、糖等混合制成。制作时将馅料裹入藕粉皮中，煮熟后捞出，可直接食用或蘸糖。',
+                season: '冬季最佳'
+            },
+            { 
+                emoji: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="20" y="40" width="60" height="40" rx="5" fill="#D2B48C" />
+                    <path d="M30,40 L25,25 L35,30 Z" fill="#CD853F" />
+                    <path d="M70,40 L75,25 L65,30 Z" fill="#CD853F" />
+                    <path d="M40,40 L35,15 L45,20 Z" fill="#CD853F" />
+                    <path d="M60,40 L65,15 L55,20 Z" fill="#CD853F" />
+                    <circle cx="35" cy="60" r="4" fill="#8B4513" />
+                    <circle cx="50" cy="55" r="4" fill="#8B4513" />
+                    <circle cx="65" cy="65" r="4" fill="#8B4513" />
+                    <path d="M30,70 L70,70" stroke="#8B4513" stroke-width="2" stroke-dasharray="4,2" />
+                </svg>`, 
+                name: '徐州地锅鸡', 
+                description: '徐州特色菜，鸡肉鲜嫩，配以面饼，汤汁浓郁，风味独特，是苏北地区极具代表性的农家菜。',
+                history: '地锅鸡源于徐州农村，过去农民在田间劳作时，用铁锅在地上烹饪鸡肉，同时在锅边贴上面饼，既省时间又美味，逐渐发展成为当地特色菜。',
+                method: '选用土鸡切块，用酱油、辣椒等调料煸炒后加水焖煮，同时将面团擀成饼状贴在锅边，利用蒸汽将饼蒸熟，使饼吸收汤汁的香味。',
+                season: '冬季最佳'
+            },
+            // 季节限定美食
+            { 
+                emoji: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20,50 C20,30 40,20 60,30 C80,40 70,60 60,70 C50,80 30,75 20,50 Z" fill="#4682B4" />
+                    <path d="M60,30 C65,25 75,30 70,35 C65,40 55,35 60,30 Z" fill="#5F9EA0" />
+                    <path d="M25,45 L15,40 L10,50 L20,55 Z" fill="#5F9EA0" />
+                    <path d="M55,65 L65,70 L60,80 L50,75 Z" fill="#5F9EA0" />
+                    <circle cx="35" cy="45" r="2" fill="#000" />
+                    <circle cx="45" cy="50" r="2" fill="#000" />
+                    <path d="M30,55 C35,60 45,60 50,55" stroke="#F0E68C" stroke-width="2" fill="none" />
+                    <path d="M70,40 L90,30" stroke="#FFD700" stroke-width="2" stroke-dasharray="3,2" />
+                </svg>`, 
+                name: '长江刀鱼', 
+                description: '春季限定美食，长江三鲜之一，肉质细嫩，味道鲜美，因体型似刀而得名，是江苏春季不可多得的美味。',
+                history: '长江刀鱼自古以来就是名贵鱼类，明清时期曾作为贡品。因其味道鲜美，产量稀少，成为春季最受追捧的江鲜之一。',
+                method: '最经典的做法是清蒸，以保持其原汁原味。将刀鱼处理干净后，加入少量姜丝、料酒，上笼蒸熟，出锅后淋上少许热油和酱油即可。',
+                season: '春季',
+                isSeasonal: true
+            },
+            { 
+                emoji: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="50" cy="50" rx="30" ry="25" fill="#AFEEEE" />
+                    <path d="M50,25 C40,35 40,65 50,75 C60,65 60,35 50,25 Z" fill="#87CEEB" />
+                    <circle cx="35" cy="45" r="3" fill="#000" />
+                    <circle cx="45" cy="55" r="3" fill="#000" />
+                    <circle cx="55" cy="50" r="3" fill="#000" />
+                    <path d="M65,40 L85,30" stroke="#FFD700" stroke-width="2" stroke-dasharray="3,2" />
+                    <path d="M20,50 L10,60 L25,65 Z" fill="#87CEEB" />
+                    <path d="M80,60 L90,70 L75,75 Z" fill="#87CEEB" />
+                </svg>`, 
+                name: '太湖白虾', 
+                description: '夏季限定美食，太湖三白之一，肉质细嫩，味道鲜美，通体透明，是江苏夏季的时令美味。',
+                history: '太湖白虾历史悠久，早在唐代就有记载。因其肉质鲜美，营养丰富，成为太湖地区著名的水产，深受当地人喜爱。',
+                method: '常见做法有白灼、醉制等。白灼能最大程度保留其鲜味，将白虾洗净后用沸水焯烫，捞出后蘸姜醋食用，鲜美无比。',
+                season: '夏季',
+                isSeasonal: true
+            },
+            { 
+                emoji: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="30" fill="#F5DEB3" />
+                    <circle cx="35" cy="40" r="5" fill="#FFD700" />
+                    <circle cx="65" cy="40" r="5" fill="#FFD700" />
+                    <circle cx="30" cy="60" r="5" fill="#FFD700" />
+                    <circle cx="50" cy="65" r="5" fill="#FFD700" />
+                    <circle cx="70" cy="60" r="5" fill="#FFD700" />
+                    <path d="M50,20 L50,30" stroke="#8B4513" stroke-width="3" />
+                    <path d="M40,25 L60,25" stroke="#8B4513" stroke-width="3" />
+                    <path d="M75,50 L90,40" stroke="#FFD700" stroke-width="2" stroke-dasharray="3,2" />
+                </svg>`, 
+                name: '东山银杏', 
+                description: '秋季限定美食，苏州东山特产，果实饱满，营养丰富，味道独特，是江苏秋季的特色食材。',
+                history: '东山银杏种植历史悠久，已有上千年历史。当地有许多千年古银杏树，所产银杏品质优良，远近闻名。',
+                method: '银杏可炒食、煲汤或做甜品。常见做法有"银杏炒鸡丁"，将银杏与鸡肉同炒，味道鲜香，营养丰富。需注意银杏需煮熟，且不宜过量食用。',
+                season: '秋季',
+                isSeasonal: true
+            },
+            { 
+                emoji: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="20" y="60" width="60" height="30" rx="5" fill="#228B22" />
+                    <path d="M30,60 C30,40 40,20 50,20 C60,20 70,40 70,60" fill="#228B22" />
+                    <path d="M25,50 C20,35 25,20 35,15" stroke="#228B22" stroke-width="4" fill="none" />
+                    <path d="M75,50 C80,35 75,20 65,15" stroke="#228B22" stroke-width="4" fill="none" />
+                    <path d="M40,45 C35,30 40,15 45,10" stroke="#228B22" stroke-width="4" fill="none" />
+                    <path d="M60,45 C65,30 60,15 55,10" stroke="#228B22" stroke-width="4" fill="none" />
+                    <path d="M10,65 L20,60" stroke="#FFD700" stroke-width="2" stroke-dasharray="3,2" />
+                    <circle cx="50" cy="40" r="3" fill="#7CFC00" />
+                    <circle cx="40" cy="50" r="3" fill="#7CFC00" />
+                    <circle cx="60" cy="50" r="3" fill="#7CFC00" />
+                </svg>`, 
+                name: '扬州青菜', 
+                description: '冬季限定美食，扬州特产青菜，叶片肥厚，口感鲜嫩，味道清甜，是江苏冬季的时令蔬菜。',
+                history: '扬州青菜种植历史悠久，是扬州人冬季餐桌上的必备蔬菜。因其品质优良，成为扬州饮食文化的一部分。',
+                method: '最经典的做法是清炒，保持其原汁原味。将青菜洗净切段，用猪油快炒，加少许盐调味，口感鲜嫩，味道清甜。',
+                season: '冬季',
+                isSeasonal: true
+            }
+        ];
+
+        // 游戏状态
+        const gameState = {
+            board: [],
+            score: 0,
+            timeLeft: 120,
+            level: 1,
+            selectedCell: null,
+            isPlaying: false,
+            timer: null,
+            remainingPairs: 0,
+            totalPairs: 0,
+            startTime: null,
+            comboCount: 0,
+            lastMatchTime: 0,
+            boardSize: 6,
+            unlockedFoods: [],
+            currentSeason: getCurrentSeason()
+        };
+
+        // DOM元素
+        const gameBoard = document.getElementById('gameBoard');
+        const scoreElement = document.getElementById('score');
+        const timerElement = document.getElementById('timer');
+        const levelElement = document.getElementById('level');
+        const hintBtn = document.getElementById('hintBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const albumBtn = document.getElementById('albumBtn');
+        const foodName = document.getElementById('foodName');
+        const foodDescription = document.getElementById('foodDescription');
+        const gameMessage = document.getElementById('gameMessage');
+        const messageTitle = document.getElementById('messageTitle');
+        const messageText = document.getElementById('messageText');
+        const messageBtn = document.getElementById('messageBtn');
+        const progressBar = document.getElementById('progressBar');
+        const comboCounter = document.getElementById('comboCounter');
+        const difficultyScreen = document.getElementById('difficultyScreen');
+        const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+        const foodAlbum = document.getElementById('foodAlbum');
+        const closeAlbum = document.getElementById('closeAlbum');
+        const foodGrid = document.getElementById('foodGrid');
+        const currentSeasonElement = document.getElementById('currentSeason');
+        const seasonIndicator = document.getElementById('seasonIndicator');
+
+        // 初始化游戏
+        function initGame() {
+            clearInterval(gameState.timer);
+            gameState.score = 0;
+            gameState.selectedCell = null;
+            gameState.isPlaying = true;
+            gameState.startTime = Date.now();
+            gameState.comboCount = 0;
+            gameState.lastMatchTime = 0;
+            
+            // 从本地存储加载已解锁的美食
+            const savedUnlocked = localStorage.getItem('jiangsuFoodsUnlocked');
+            gameState.unlockedFoods = savedUnlocked ? JSON.parse(savedUnlocked) : [];
+            
+            // 更新季节显示
+            currentSeasonElement.textContent = gameState.currentSeason;
+            
+            // 隐藏季节指示器（如果没有季节限定美食）
+            const hasSeasonalFoods = jiangsuFoods.some(food => food.isSeasonal && food.season === gameState.currentSeason);
+            seasonIndicator.style.display = hasSeasonalFoods ? 'inline-block' : 'none';
+            
+            updateUI();
+            createBoard();
+            startTimer();
+            updateFoodAlbum();
+            
+            // 随机显示一个已解锁的美食介绍，否则显示随机美食
+            let randomFood;
+            if (gameState.unlockedFoods.length > 0) {
+                const unlockedFoods = jiangsuFoods.filter(food => gameState.unlockedFoods.includes(food.name));
+                randomFood = unlockedFoods[Math.floor(Math.random() * unlockedFoods.length)];
+            } else {
+                randomFood = jiangsuFoods[Math.floor(Math.random() * jiangsuFoods.length)];
+            }
+            updateFoodInfo(randomFood);
+        }
+
+        // 创建游戏棋盘
+        function createBoard() {
+            gameBoard.innerHTML = '';
+            gameState.board = [];
+            
+            const boardSize = gameState.boardSize;
+            const totalCells = boardSize * boardSize;
+            
+            // 确保总格子数为偶数
+            const adjustedTotalCells = totalCells % 2 === 0 ? totalCells : totalCells - 1;
+            
+            // 设置网格列数
+            gameBoard.style.gridTemplateColumns = `repeat(${boardSize}, 1fr)`;
+            
+            // 筛选食物：包含当前季节的限定美食和普通美食
+            let availableFoods = [...jiangsuFoods.filter(food => 
+                !food.isSeasonal || food.season === gameState.currentSeason
+            )];
+            
+            // 确保有足够的食物种类
+            const foodsCount = Math.min(Math.floor(adjustedTotalCells / 2), availableFoods.length);
+            
+            // 如果食物种类不足，补充普通食物
+            if (foodsCount < Math.floor(adjustedTotalCells / 2)) {
+                const regularFoods = jiangsuFoods.filter(food => !food.isSeasonal);
+                availableFoods = [...availableFoods, ...regularFoods];
+            }
+            
+            // 随机选择食物
+            const selectedFoods = [];
+            for (let i = 0; i < foodsCount; i++) {
+                // 避免重复选择
+                let randomFood;
+                do {
+                    randomFood = availableFoods[Math.floor(Math.random() * availableFoods.length)];
+                } while (selectedFoods.includes(randomFood));
+                selectedFoods.push(randomFood);
+            }
+            
+            // 创建配对数组
+            const pairs = [];
+            for (let i = 0; i < adjustedTotalCells; i++) {
+                const foodIndex = Math.floor(i / 2) % foodsCount;
+                pairs.push(selectedFoods[foodIndex]);
+            }
+            
+            // 随机打乱
+            for (let i = pairs.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pairs[i], pairs[j]] = [pairs[j], pairs[i]];
+            }
+            
+            // 创建棋盘
+            gameState.totalPairs = adjustedTotalCells / 2;
+            gameState.remainingPairs = gameState.totalPairs;
+            
+            for (let i = 0; i < adjustedTotalCells; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.index = i;
+                
+                // 计算单元格位置
+                const row = Math.floor(i / boardSize);
+                const col = i % boardSize;
+                cell.dataset.row = row;
+                cell.dataset.col = col;
+                
+                const food = pairs[i];
+                cell.innerHTML = food.emoji;
+                cell.dataset.foodIndex = jiangsuFoods.indexOf(food);
+                gameState.board[i] = {
+                    food: food,
+                    isEmpty: false,
+                    row: row,
+                    col: col
+                };
+                
+                cell.addEventListener('click', () => handleCellClick(cell));
+                gameBoard.appendChild(cell);
+            }
+            
+            updateProgressBar();
+        }
+
+        // 处理格子点击
+        function handleCellClick(cell) {
+            if (!gameState.isPlaying) return;
+            
+            // 如果已经选中了这个格子，取消选择
+            if (gameState.selectedCell === cell) {
+                cell.classList.remove('selected');
+                gameState.selectedCell = null;
+                return;
+            }
+            
+            // 如果已经有选中的格子，尝试匹配
+            if (gameState.selectedCell) {
+                const firstCell = gameState.selectedCell;
+                const secondCell = cell;
+                
+                // 检查是否相同类型
+                if (firstCell.dataset.foodIndex === secondCell.dataset.foodIndex && firstCell !== secondCell) {
+                    // 匹配成功
+                    handleMatchSuccess(firstCell, secondCell);
+                } else {
+                    // 类型不匹配
+                    showTemporaryMessage('请选择相同的美食！');
+                    cell.classList.add('selected');
+                    setTimeout(() => {
+                        firstCell.classList.remove('selected');
+                        cell.classList.remove('selected');
+                    }, 1000);
+                }
+                
+                gameState.selectedCell = null;
+            } else {
+                // 选中第一个格子
+                cell.classList.add('selected');
+                gameState.selectedCell = cell;
+            }
+        }
+
+        // 处理匹配成功
+        function handleMatchSuccess(firstCell, secondCell) {
+            // 更新连击计数
+            const currentTime = Date.now();
+            if (currentTime - gameState.lastMatchTime < 3000) {
+                gameState.comboCount++;
+                showCombo();
+            } else {
+                gameState.comboCount = 1;
+            }
+            gameState.lastMatchTime = currentTime;
+            
+            // 计算基础分数和连击奖励
+            const baseScore = 10 * gameState.level;
+            const comboBonus = gameState.comboCount > 1 ? Math.min(50, gameState.comboCount * 5) : 0;
+            const totalScore = baseScore + comboBonus;
+            
+            // 匹配成功
+            firstCell.classList.add('matched');
+            secondCell.classList.add('matched');
+            
+            // 创建粒子特效
+            createParticleEffect(firstCell);
+            createParticleEffect(secondCell);
+            
+            // 更新分数
+            gameState.score += totalScore;
+            updateUI();
+            
+            // 解锁美食
+            const foodIndex = parseInt(firstCell.dataset.foodIndex);
+            const food = jiangsuFoods[foodIndex];
+            if (!gameState.unlockedFoods.includes(food.name)) {
+                gameState.unlockedFoods.push(food.name);
+                localStorage.setItem('jiangsuFoodsUnlocked', JSON.stringify(gameState.unlockedFoods));
+                updateFoodAlbum();
+                showTemporaryMessage(`解锁新美食: ${food.name}`);
+            }
+            
+            // 显示美食信息
+            updateFoodInfo(food);
+            
+            // 延迟后移除匹配的格子
+            setTimeout(() => {
+                firstCell.remove();
+                secondCell.remove();
+                gameState.remainingPairs--;
+                updateProgressBar();
+                
+                // 标记为已消除
+                gameState.board[firstCell.dataset.index].isEmpty = true;
+                gameState.board[secondCell.dataset.index].isEmpty = true;
+                
+                // 检查游戏是否胜利
+                if (gameState.remainingPairs === 0) {
+                    levelUp();
+                }
+            }, 800);
+        }
+
+        // 创建粒子特效
+        function createParticleEffect(cell) {
+            const rect = cell.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            const colors = ['#f1c40f', '#e74c3c', '#2ecc71', '#3498db', '#9b59b6'];
+            
+            for (let i = 0; i < 12; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // 随机颜色
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.background = color;
+                
+                // 随机方向
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 50 + Math.random() * 100;
+                const duration = 0.5 + Math.random() * 0.5;
+                
+                // 初始位置
+                particle.style.left = `${centerX}px`;
+                particle.style.top = `${centerY}px`;
+                
+                document.body.appendChild(particle);
+                
+                // 动画
+                const animation = particle.animate([
+                    { 
+                        transform: 'translate(0, 0) scale(1)',
+                        opacity: 1
+                    },
+                    { 
+                        transform: `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px) scale(0)`,
+                        opacity: 0
+                    }
+                ], {
+                    duration: duration * 1000,
+                    easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)'
+                });
+                
+                animation.onfinish = () => {
+                    document.body.removeChild(particle);
+                };
+            }
+        }
+
+        // 显示连击效果
+        function showCombo() {
+            if (gameState.comboCount > 1) {
+                comboCounter.textContent = `COMBO x${gameState.comboCount}!`;
+                comboCounter.style.opacity = '1';
+                comboCounter.style.transform = 'translateX(-50%) scale(1.5)';
+                
+                // 动画效果
+                setTimeout(() => {
+                    comboCounter.style.transform = 'translateX(-50%) scale(1)';
+                }, 200);
+                
+                setTimeout(() => {
+                    comboCounter.style.opacity = '0';
+                }, 1500);
+            }
+        }
+
+        // 显示临时消息
+        function showTemporaryMessage(message) {
+            const tempMsg = document.createElement('div');
+            tempMsg.textContent = message;
+            tempMsg.style.position = 'fixed';
+            tempMsg.style.top = '50%';
+            tempMsg.style.left = '50%';
+            tempMsg.style.transform = 'translate(-50%, -50%)';
+            tempMsg.style.background = '#e74c3c';
+            tempMsg.style.color = 'white';
+            tempMsg.style.padding = '10px 20px';
+            tempMsg.style.borderRadius = '5px';
+            tempMsg.style.zIndex = '1000';
+            tempMsg.style.fontSize = '0.8rem';
+            document.body.appendChild(tempMsg);
+            
+            setTimeout(() => {
+                document.body.removeChild(tempMsg);
+            }, 1500);
+        }
+
+        // 升级关卡
+        function levelUp() {
+            gameState.level++;
+            gameState.score += 50 * gameState.level; // 关卡完成奖励
+            
+            if (gameState.level > 5) {
+                // 游戏通关
+                showMessage('恭喜通关！', `你以${gameState.score}分的成绩完成了所有关卡！`);
+                gameState.isPlaying = false;
+                clearInterval(gameState.timer);
+            } else {
+                showMessage('关卡完成！', `进入第${gameState.level}关，继续挑战！`);
+                setTimeout(() => {
+                    createBoard();
+                    updateUI();
+                }, 1500);
+            }
+        }
+
+        // 开始计时器
+        function startTimer() {
+            clearInterval(gameState.timer);
+            gameState.timer = setInterval(() => {
+                gameState.timeLeft--;
+                updateUI();
+                
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(gameState.timer);
+                    gameState.isPlaying = false;
+                    showMessage('时间到！', `你的最终得分是：${gameState.score}`);
+                }
+            }, 1000);
+        }
+
+        // 更新UI
+        function updateUI() {
+            scoreElement.textContent = gameState.score;
+            timerElement.textContent = gameState.timeLeft;
+            levelElement.textContent = gameState.level;
+        }
+
+        // 更新进度条
+        function updateProgressBar() {
+            const progress = ((gameState.totalPairs - gameState.remainingPairs) / gameState.totalPairs) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        // 更新美食信息
+        function updateFoodInfo(food) {
+            foodName.textContent = food.name;
+            foodDescription.textContent = food.description;
+        }
+
+        // 更新美食图鉴
+        function updateFoodAlbum() {
+            foodGrid.innerHTML = '';
+            
+            // 按季节分类显示
+            jiangsuFoods.forEach(food => {
+                const card = document.createElement('div');
+                card.className = `food-card ${gameState.unlockedFoods.includes(food.name) ? '' : 'locked'}`;
+                
+                card.innerHTML = `
+                    <div class="food-emoji">${food.emoji}</div>
+                    <h3>${food.name}</h3>
+                    <div class="food-details">
+                        <p>${gameState.unlockedFoods.includes(food.name) ? food.history : '匹配此美食解锁详细信息'}</p>
+                        ${gameState.unlockedFoods.includes(food.name) ? `<p><strong>制作方法：</strong>${food.method}</p>` : ''}
+                        <div class="food-season"><i class="fas fa-calendar-alt"></i> ${food.season}</div>
+                        ${food.isSeasonal ? '<div class="food-season" style="background:#e74c3c;"><i class="fas fa-star"></i> 季节限定</div>' : ''}
+                    </div>
+                `;
+                
+                foodGrid.appendChild(card);
+            });
+        }
+
+        // 显示提示
+        function showHint() {
+            if (!gameState.isPlaying) return;
+            
+            // 查找相同的食物
+            const cells = document.querySelectorAll('.cell:not(.matched)');
+            let foundPair = false;
+            
+            for (let i = 0; i < cells.length && !foundPair; i++) {
+                const cell1 = cells[i];
+                
+                for (let j = i + 1; j < cells.length && !foundPair; j++) {
+                    const cell2 = cells[j];
+                    
+                    if (cell1.dataset.foodIndex === cell2.dataset.foodIndex) {
+                        // 找到一对可匹配的格子
+                        cell1.classList.add('selected');
+                        cell2.classList.add('selected');
+                        
+                        setTimeout(() => {
+                            cell1.classList.remove('selected');
+                            cell2.classList.remove('selected');
+                        }, 1500);
+                        
+                        foundPair = true;
+                        gameState.score = Math.max(0, gameState.score - 5); // 提示扣分
+                        updateUI();
+                    }
+                }
+            }
+            
+            if (!foundPair) {
+                showTemporaryMessage('当前没有可匹配的格子');
+            }
+        }
+
+        // 显示消息
+        function showMessage(title, text) {
+            messageTitle.textContent = title;
+            messageText.textContent = text;
+            gameMessage.style.display = 'block';
+        }
+
+        // 事件监听
+        hintBtn.addEventListener('click', showHint);
+        restartBtn.addEventListener('click', () => {
+            difficultyScreen.style.display = 'flex';
+        });
+        messageBtn.addEventListener('click', () => {
+            gameMessage.style.display = 'none';
+        });
+        
+        // 难度选择
+        difficultyBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                gameState.boardSize = parseInt(btn.dataset.size);
+                gameState.timeLeft = parseInt(btn.dataset.time);
+                difficultyScreen.style.display = 'none';
+                initGame();
+            });
+        });
+        
+        // 美食图鉴
+        albumBtn.addEventListener('click', () => {
+            foodAlbum.style.display = 'block';
+            // 暂停游戏
+            if (gameState.isPlaying) {
+                clearInterval(gameState.timer);
+                gameState.isPlaying = false;
+            }
+        });
+        
+        closeAlbum.addEventListener('click', () => {
+            foodAlbum.style.display = 'none';
+            // 恢复游戏
+            if (!gameState.isPlaying && gameState.timeLeft > 0 && gameState.remainingPairs > 0) {
+                gameState.isPlaying = true;
+                startTimer();
+            }
+        });
+
+        // 防止移动端下拉刷新
+        document.addEventListener('touchmove', function(e) {
+            if (e.touches.length > 1) e.preventDefault();
+        }, { passive: false });
+
+        // 初始化难度选择界面
+        difficultyScreen.style.display = 'flex';
+    </script>
+</body>
+</html>
